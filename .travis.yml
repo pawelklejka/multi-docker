@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t pawelklejka/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true pawelklejka/react-test npm test
+
+after_success:
+  - docker build -t pawelklejka/multi-client ./client
+  - docker build -t pawelklejka/multi-nginx ./nginx
+  - docker build -t pawelklejka/multi-server ./server
+  - docker build -t pawelklejka/multi-worker ./worker
+  # login to docker cli
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # take those images and push to docker hub
+  - docker push pawelklejka/multi-client
+  - docker push pawelklejka/multi-nginx
+  - docker push pawelklejka/multi-server
+  - docker push pawelklejka/multi-worker
